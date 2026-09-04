@@ -30,9 +30,6 @@ export default function Navbar({ activeTab, setActiveTab, escalationsCount, onQu
                 /ghost-detector
               </span>
             </div>
-            <span className="hidden sm:inline-block text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded bg-[#101726] text-slate-400 border border-[#1E283D] ml-2">
-              Track 01 • Agentic Commerce
-            </span>
           </div>
 
           {/* Navigation & Actions */}
