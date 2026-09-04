@@ -61,18 +61,10 @@ export default function Navbar({ activeTab, setActiveTab, escalationsCount, onQu
             </nav>
 
             {/* Status indicator */}
-            <div className="hidden lg:flex items-center space-x-1.5 text-xs text-slate-400 font-mono">
+            <div className="flex items-center space-x-1.5 text-xs text-slate-400 font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-[11px] text-slate-400">poller active</span>
             </div>
-
-            {/* Cream Primary Button (like "Apply now" in buildathon) */}
-            <button
-              onClick={onQuickDemo}
-              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-[#FBF7EE] text-[#07090E] hover:bg-[#E5DFD1] transition-all shadow-sm active:scale-95"
-            >
-              Simulate 2am Drop
-            </button>
 
           </div>
 
