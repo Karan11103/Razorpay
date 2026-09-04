@@ -58,11 +58,36 @@ export default function ArchitectureView() {
         </p>
       </div>
 
+      {/* Enterprise System Architecture Diagram Image */}
+      <div className="bg-[#0D111A] rounded-lg border border-[#182030] p-4 overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <Layers className="w-4 h-4 text-[#FBF7EE]" />
+            <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              Enterprise System Blueprint
+            </h4>
+          </div>
+          <a
+            href="/architecture.png"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-mono text-slate-400 hover:text-white underline"
+          >
+            Open Full Res (1920x1080) ↗
+          </a>
+        </div>
+        <img
+          src="/architecture.png"
+          alt="Ghost Payment Detector Enterprise System Architecture"
+          className="w-full h-auto rounded border border-[#182030] shadow-2xl hover:scale-[1.005] transition-transform"
+        />
+      </div>
+
       {/* Architecture Flow */}
       <div className="bg-[#0D111A] rounded-lg border border-[#182030] p-5">
         <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
           <Layers className="w-3.5 h-3.5 text-[#FBF7EE]" />
-          End-to-End System Pipeline
+          Modular Component Breakdown
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">

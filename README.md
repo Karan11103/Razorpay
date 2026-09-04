@@ -20,6 +20,8 @@ In high-volume e-commerce and fintech platforms, **webhook delivery failure** is
 
 ## 🏛️ 2. Architectural Blueprint & AI Judgment Boundary
 
+![Enterprise System Architecture Blueprint](docs/architecture.png)
+
 ```
 ┌─────────────────┐      ┌──────────────────────┐      ┌────────────────────┐
 │  Checkout Sim    │─────▶│  Razorpay Test API    │      │  Merchant Order DB  │

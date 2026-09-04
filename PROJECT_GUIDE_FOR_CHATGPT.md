@@ -36,6 +36,8 @@ The **Ghost Payment Detector** is an autonomous dual-channel reconciliation engi
 
 ## 2. System Architecture & Component Blueprint
 
+![Ghost Payment Detector Enterprise System Architecture](docs/architecture.png)
+
 ```mermaid
 flowchart TD
     subgraph INGESTION["1. INGESTION & GATEWAY LAYER"]
