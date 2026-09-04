@@ -50,19 +50,19 @@ export default function AuditTable() {
     switch (actor) {
       case 'system':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-950/60 text-blue-400 border border-blue-800/40">
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#101726] text-blue-400 border border-[#1E283D]">
             system
           </span>
         );
       case 'human':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-950/60 text-amber-400 border border-amber-800/40">
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#1A1408] text-amber-400 border border-amber-900/50">
             human
           </span>
         );
       case 'llm':
         return (
-          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-800 text-slate-300 border border-slate-700">
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#121620] text-slate-300 border border-[#1E2538]">
             llm
           </span>
         );
@@ -88,53 +88,53 @@ export default function AuditTable() {
   };
 
   return (
-    <div className="bg-[#0F1626] rounded-lg border border-slate-800 shadow-sm overflow-hidden">
+    <div className="bg-[#0D111A] rounded-lg border border-[#182030] overflow-hidden">
       
       {/* Top Header & Export */}
-      <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-900/40">
+      <div className="p-4 border-b border-[#182030] flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2">
-            <h3 className="text-sm font-semibold text-white tracking-tight">Compliance Audit Trail</h3>
-            <span className="text-xs text-slate-400 font-mono">({totalRecords} immutable entries)</span>
+            <h3 className="text-sm font-semibold text-[#FBF7EE] tracking-tight">Compliance Audit Trail</h3>
+            <span className="text-xs text-slate-500 font-mono">({totalRecords} entries)</span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            Append-only financial record of reconciliation events, state transitions, and actor decisions
+            Immutable, append-only financial audit trail for compliance verification
           </p>
         </div>
 
         <a
           href={getAuditExportUrl()}
           download="ghost_detector_audit_trail.csv"
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shadow-sm"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-[#FBF7EE] text-[#07090E] hover:bg-[#E5DFD1] transition-all shadow-sm"
         >
-          <Download className="w-3.5 h-3.5 text-slate-400" />
+          <Download className="w-3.5 h-3.5" />
           <span>Export CSV</span>
         </a>
       </div>
 
       {/* Filter Bar */}
-      <form onSubmit={handleSearchSubmit} className="p-3 bg-slate-900/50 border-b border-slate-800 flex flex-wrap items-center gap-2.5">
+      <form onSubmit={handleSearchSubmit} className="p-3 bg-[#07090E] border-b border-[#182030] flex flex-wrap items-center gap-2.5">
         
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder="Search by Order ID..."
             value={orderIdSearch}
             onChange={(e) => setOrderIdSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-[#090D16] border border-slate-700 rounded text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+            className="w-full pl-8 pr-3 py-1.5 bg-[#0D111A] border border-[#182030] rounded text-xs text-[#FBF7EE] placeholder-slate-500 focus:outline-none focus:border-slate-500 font-mono"
           />
         </div>
 
         <div className="flex items-center space-x-2">
-          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          <Filter className="w-3.5 h-3.5 text-slate-500" />
           <select
             value={actorFilter}
             onChange={(e) => {
               setActorFilter(e.target.value);
               setPage(1);
             }}
-            className="bg-[#090D16] border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-blue-500 font-mono"
+            className="bg-[#0D111A] border border-[#182030] rounded px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-slate-500 font-mono"
           >
             <option value="">All Actors</option>
             <option value="system">System (Gate/Poller)</option>
@@ -145,7 +145,7 @@ export default function AuditTable() {
 
         <button
           type="submit"
-          className="px-3.5 py-1.5 rounded bg-[#0C66E4] hover:bg-[#0052CC] text-white font-medium text-xs transition-colors"
+          className="px-3.5 py-1.5 rounded bg-[#182030] hover:bg-[#222D42] text-slate-200 font-medium text-xs transition-colors"
         >
           Search
         </button>
@@ -154,7 +154,7 @@ export default function AuditTable() {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-[#090D16] text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+          <thead className="bg-[#07090E] text-slate-400 uppercase font-mono text-[10px] border-b border-[#182030]">
             <tr>
               <th className="py-2.5 px-4 font-semibold">Timestamp (UTC)</th>
               <th className="py-2.5 px-4 font-semibold">Actor</th>
@@ -163,11 +163,11 @@ export default function AuditTable() {
               <th className="py-2.5 px-4 font-semibold text-right">Details</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/80 text-slate-300">
+          <tbody className="divide-y divide-[#182030] text-slate-300">
             {logs.length === 0 ? (
               <tr>
-                <td colSpan="5" className="py-8 text-center text-slate-500">
-                  {isLoading ? 'Loading records...' : 'No audit entries found matching criteria.'}
+                <td colSpan="5" className="py-8 text-center text-slate-500 font-mono">
+                  {isLoading ? '/ Loading records...' : '/ No audit entries found matching criteria.'}
                 </td>
               </tr>
             ) : (
@@ -182,7 +182,7 @@ export default function AuditTable() {
 
                 return (
                   <React.Fragment key={log.id}>
-                    <tr className="hover:bg-slate-900/40 transition-colors">
+                    <tr className="hover:bg-[#0E1420] transition-colors">
                       <td className="py-3 px-4 font-mono text-slate-400 whitespace-nowrap">
                         <div className="flex items-center space-x-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-500" />
@@ -193,22 +193,22 @@ export default function AuditTable() {
                       <td className="py-3 px-4 font-mono font-medium text-slate-200">
                         {log.action}
                       </td>
-                      <td className="py-3 px-4 font-mono text-slate-300 font-semibold">
+                      <td className="py-3 px-4 font-mono text-[#FBF7EE] font-semibold">
                         {log.order_id || '—'}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                          className="text-[11px] font-mono text-blue-400 hover:text-blue-300"
+                          className="text-[11px] font-mono text-slate-400 hover:text-[#FBF7EE]"
                         >
                           {isExpanded ? 'Collapse' : 'Inspect Payload'}
                         </button>
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr className="bg-[#090D16]">
+                      <tr className="bg-[#07090E]">
                         <td colSpan="5" className="p-4">
-                          <pre className="text-[11px] font-mono bg-slate-950 p-3 rounded border border-slate-800 text-slate-300 overflow-x-auto max-h-48">
+                          <pre className="text-[11px] font-mono bg-[#0D111A] p-3 rounded border border-[#182030] text-slate-300 overflow-x-auto max-h-48">
                             {JSON.stringify(parsedDetail, null, 2)}
                           </pre>
                         </td>
@@ -222,24 +222,24 @@ export default function AuditTable() {
         </table>
       </div>
 
-      {/* Pagination Footer */}
-      <div className="p-3 border-t border-slate-800 bg-slate-900/30 flex items-center justify-between text-xs text-slate-400">
-        <div>
-          Page <span className="font-semibold text-white">{page}</span> of{' '}
-          <span className="font-semibold text-white">{totalPages}</span>
+      {/* Pagination */}
+      <div className="p-3 border-t border-[#182030] bg-[#07090E] flex items-center justify-between text-xs text-slate-400">
+        <div className="font-mono text-[11px]">
+          Page <span className="font-semibold text-[#FBF7EE]">{page}</span> of{' '}
+          <span className="font-semibold text-[#FBF7EE]">{totalPages}</span>
         </div>
         <div className="flex items-center space-x-1.5">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || isLoading}
-            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300"
+            className="p-1.5 rounded bg-[#0D111A] hover:bg-[#182030] border border-[#182030] disabled:opacity-40 disabled:cursor-not-allowed text-slate-300"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages || isLoading}
-            className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300"
+            className="p-1.5 rounded bg-[#0D111A] hover:bg-[#182030] border border-[#182030] disabled:opacity-40 disabled:cursor-not-allowed text-slate-300"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

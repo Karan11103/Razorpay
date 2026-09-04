@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
+import HeroBanner from './components/HeroBanner';
 import StatCards from './components/StatCards';
 import LiveFeed from './components/LiveFeed';
 import ChaosPanel from './components/ChaosPanel';
 import AuditTable from './components/AuditTable';
 import EscalationQueue from './components/EscalationQueue';
 import ArchitectureView from './components/ArchitectureView';
-import { fetchStats, fetchRecentEvents, fetchEscalations } from './services/api';
+import { fetchStats, fetchRecentEvents, fetchEscalations, simulateCheckout, simulateWebhook, triggerReconcile } from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -22,6 +23,7 @@ export default function App() {
   const [recentEvents, setRecentEvents] = useState([]);
   const [escalationsCount, setEscalationsCount] = useState(0);
   const [isFeedLoading, setIsFeedLoading] = useState(false);
+  const [isHeroSimulating, setIsHeroSimulating] = useState(false);
 
   // Poll stats and recent events every 3.5 seconds
   const refreshData = useCallback(async () => {
@@ -52,29 +54,67 @@ export default function App() {
     setIsFeedLoading(false);
   };
 
+  // Quick Ghost Payment Simulation triggered from Hero or Navbar
+  const handleQuickGhostSimulation = async () => {
+    setIsHeroSimulating(true);
+    try {
+      const order = await simulateCheckout(49900, 'INR');
+      await simulateWebhook(order.id, 'drop');
+      await new Promise(r => setTimeout(r, 400));
+      await triggerReconcile(0);
+      await refreshData();
+      setActiveTab('dashboard');
+    } catch (err) {
+      console.error('Quick simulation failed:', err);
+    } finally {
+      setIsHeroSimulating(false);
+    }
+  };
+
+  const handleTriggerPoller = async () => {
+    setIsHeroSimulating(true);
+    try {
+      await triggerReconcile(0);
+      await refreshData();
+    } catch (err) {
+      console.error('Poller trigger failed:', err);
+    } finally {
+      setIsHeroSimulating(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#07090E] text-[#FBF7EE] flex flex-col font-sans selection:bg-[#FBF7EE] selection:text-[#07090E]">
       
-      {/* Top Enterprise Navigation */}
+      {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         escalationsCount={escalationsCount}
+        onQuickDemo={handleQuickGhostSimulation}
       />
 
-      {/* Main Content Area */}
+      {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        {/* Dashboard Overview */}
+        {/* Overview Tab */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6 animate-fadeIn">
-            {/* Top Metric Cards */}
+            
+            {/* Moody, Bold Razorpay Buildathon Hero Banner */}
+            <HeroBanner
+              onSimulateGhost={handleQuickGhostSimulation}
+              onTriggerPoller={handleTriggerPoller}
+              isRunning={isHeroSimulating}
+            />
+
+            {/* Clean Metric Cards */}
             <StatCards stats={stats} />
 
-            {/* Developer Sandbox Controls */}
+            {/* Sandbox Controls */}
             <ChaosPanel onActionComplete={refreshData} />
 
-            {/* Reconciliation Stream */}
+            {/* Live Stream Activity Feed */}
             <LiveFeed
               events={recentEvents}
               isLoading={isFeedLoading}
@@ -90,14 +130,14 @@ export default function App() {
           </div>
         )}
 
-        {/* Escalations Queue Tab */}
+        {/* Escalations Tab */}
         {activeTab === 'escalations' && (
           <div className="animate-fadeIn">
             <EscalationQueue onResolved={refreshData} />
           </div>
         )}
 
-        {/* Simulation Controls Dedicated View */}
+        {/* Sandbox Tab */}
         {activeTab === 'simulation' && (
           <div className="space-y-6 animate-fadeIn">
             <ChaosPanel onActionComplete={refreshData} />
@@ -109,7 +149,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Architecture & Complexity Tab */}
+        {/* Architecture Tab */}
         {activeTab === 'architecture' && (
           <div className="animate-fadeIn">
             <ArchitectureView />
@@ -118,16 +158,20 @@ export default function App() {
 
       </main>
 
-      {/* Enterprise Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#0B111E] py-4 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Razorpay AI Buildathon • Track 01 (Agentic Commerce) / Track 03 (Revenue Recovery)</span>
-          <div className="flex items-center space-x-3 text-[11px] font-mono text-slate-500">
-            <span>Deterministic Gate</span>
-            <span>•</span>
-            <span>O(1) Idempotency</span>
-            <span>•</span>
-            <span>Isolated Read-Only LLM</span>
+      {/* Atmospheric Buildathon Footer */}
+      <footer className="border-t border-[#182030] bg-[#07090E] py-6 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <span className="font-extrabold text-slate-300 italic">Razorpay</span>
+            <span className="text-slate-600">/</span>
+            <span>Ghost Payment Detector</span>
+            <span className="text-slate-700">|</span>
+            <span className="text-slate-400">AI Buildathon Bangalore</span>
+          </div>
+          <div className="flex items-center space-x-3 font-mono text-[11px] text-slate-500">
+            <span>/ Deterministic Gate</span>
+            <span>/ O(1) Idempotency</span>
+            <span>/ Isolated LLM Explainer</span>
           </div>
         </div>
       </footer>
