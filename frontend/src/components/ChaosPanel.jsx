@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Play, RefreshCw, AlertOctagon, Sliders, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Sliders, Play, RefreshCw, CheckCircle2, AlertTriangle, ShieldCheck, ArrowRight } from 'lucide-react';
 import { simulateCheckout, simulateWebhook, triggerReconcile, updateChaosConfig, fetchChaosConfig } from '../services/api';
 
 export default function ChaosPanel({ onActionComplete }) {
@@ -37,81 +37,36 @@ export default function ChaosPanel({ onActionComplete }) {
     }
   };
 
-  // 1-Click Ghost Payment Demo Shortcut: Checkout -> Webhook Drop -> Immediate Auto-Reconciliation
+  // Full Ghost Payment Demo: Checkout -> Webhook Drop -> Immediate Auto-Reconciliation
   const handleFullGhostScenario = async () => {
     setIsRunning(true);
-    setStatusMsg({ type: 'info', text: 'Step 1/3: Creating simulated checkout order on Razorpay Gateway...' });
+    setStatusMsg({ type: 'info', text: 'Simulating checkout order on Razorpay Gateway...' });
     try {
       const paise = Math.round(amountRupees * 100);
       const order = await simulateCheckout(paise, 'INR');
 
       setStatusMsg({
-        type: 'warning',
-        text: `Step 2/3: Order ${order.id} created as 'pending'. Injecting CHAOS: Dropping webhook silently...`
+        type: 'info',
+        text: `Order ${order.id} generated. Simulating network failure (silent webhook drop)...`
       });
 
       await simulateWebhook(order.id, 'drop');
-
-      setStatusMsg({
-        type: 'warning',
-        text: `Ghost payment created! Merchant DB has ${order.id} as 'pending' while Gateway has 'captured'. Triggering poller...`
-      });
-
-      // Brief delay for realism
-      await new Promise(r => setTimeout(r, 600));
-
-      const recResult = await triggerReconcile(0);
+      await new Promise(r => setTimeout(r, 400));
+      await triggerReconcile(0);
 
       setStatusMsg({
         type: 'success',
-        text: `SUCCESS! Poller detected ghost payment and deterministic gate auto-corrected order ${order.id} to 'corrected'.`
+        text: `Ghost payment resolved: Gate verified captured gateway state for order ${order.id} and auto-corrected order.`
       });
 
       if (onActionComplete) onActionComplete();
     } catch (err) {
-      setStatusMsg({ type: 'error', text: `Scenario failed: ${err.message}` });
+      setStatusMsg({ type: 'error', text: `Simulation error: ${err.message}` });
     } finally {
       setIsRunning(false);
     }
   };
 
-  // Create isolated order
-  const handleCreateOrderOnly = async () => {
-    setIsRunning(true);
-    try {
-      const paise = Math.round(amountRupees * 100);
-      const order = await simulateCheckout(paise, 'INR');
-      setStatusMsg({
-        type: 'info',
-        text: `Order ${order.id} created (₹${amountRupees}). Status: 'pending'. Ready for webhook or reconciliation.`
-      });
-      if (onActionComplete) onActionComplete();
-    } catch (err) {
-      setStatusMsg({ type: 'error', text: `Failed to create order: ${err.message}` });
-    } finally {
-      setIsRunning(false);
-    }
-  };
-
-  // Trigger manual reconciliation pass
-  const handleManualReconcile = async () => {
-    setIsRunning(true);
-    try {
-      const result = await triggerReconcile(0);
-      const d = result.data;
-      setStatusMsg({
-        type: 'success',
-        text: `Poller completed: ${d.scanned_count} pending orders scanned, ${d.auto_corrected_count} auto-corrected, ${d.escalated_count} escalated.`
-      });
-      if (onActionComplete) onActionComplete();
-    } catch (err) {
-      setStatusMsg({ type: 'error', text: `Reconciliation failed: ${err.message}` });
-    } finally {
-      setIsRunning(false);
-    }
-  };
-
-  // Trigger Corrupted Webhook Scenario
   const handleCorruptedWebhookScenario = async () => {
     setIsRunning(true);
     try {
@@ -121,7 +76,7 @@ export default function ChaosPanel({ onActionComplete }) {
       await triggerReconcile(0);
       setStatusMsg({
         type: 'warning',
-        text: `Corrupted payload injected! Gate detected invalid signature & blocked auto-correction. Pushed to Escalation Queue.`
+        text: `Tampered signature detected for ${order.id}. Auto-correction safely blocked; sent to Escalation Queue.`
       });
       if (onActionComplete) onActionComplete();
     } catch (err) {
@@ -131,51 +86,64 @@ export default function ChaosPanel({ onActionComplete }) {
     }
   };
 
+  const handleManualReconcile = async () => {
+    setIsRunning(true);
+    try {
+      const result = await triggerReconcile(0);
+      const d = result.data;
+      setStatusMsg({
+        type: 'success',
+        text: `Batch complete: ${d.scanned_count} scanned, ${d.auto_corrected_count} auto-corrected, ${d.escalated_count} escalated.`
+      });
+      if (onActionComplete) onActionComplete();
+    } catch (err) {
+      setStatusMsg({ type: 'error', text: `Reconciliation error: ${err.message}` });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   return (
-    <div className="rounded-xl border-2 border-dashed border-amber-500/50 bg-[#12141f] p-5 shadow-2xl relative mb-6">
+    <div className="bg-[#0F1626] rounded-lg border border-slate-800 p-5 shadow-sm mb-6">
       
-      {/* Simulation Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-amber-500/30 mb-5">
-        <div className="flex items-center space-x-2.5">
-          <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
-            <AlertOctagon className="w-5 h-5 animate-pulse" />
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800 mb-4">
+        <div>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-sm font-semibold text-white tracking-tight">
+              Developer Sandbox & Chaos Testing
+            </h3>
+            <span className="text-[11px] font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700">
+              Isolated Test Relay
+            </span>
           </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base font-bold text-amber-400 uppercase tracking-wide">
-                Chaos-Injection Harness
-              </h2>
-              <span className="text-[10px] uppercase font-bold bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40">
-                Simulation Only — Demo Controls
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">
-              Inject controlled webhook failures to reproduce 2am ghost-payment incidents live during your pitch.
-            </p>
-          </div>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Configure failure probabilities or trigger one-click simulations to test reconciliation resilience.
+          </p>
         </div>
 
-        {/* Quick Amount Setting */}
-        <div className="flex items-center space-x-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700">
-          <span className="text-xs text-slate-400 font-medium">Test Order Value:</span>
-          <span className="text-xs text-slate-300">₹</span>
-          <input
-            type="number"
-            value={amountRupees}
-            onChange={(e) => setAmountRupees(Number(e.target.value))}
-            className="w-20 bg-slate-800 border border-slate-700 rounded px-2 py-0.5 text-xs font-mono text-cyan-400 font-bold focus:outline-none focus:border-cyan-500"
-          />
+        {/* Amount Input */}
+        <div className="flex items-center space-x-2 text-xs">
+          <span className="text-slate-400">Test Amount:</span>
+          <div className="flex items-center bg-slate-900 border border-slate-700 rounded px-2 py-1">
+            <span className="text-slate-400 text-xs mr-1">₹</span>
+            <input
+              type="number"
+              value={amountRupees}
+              onChange={(e) => setAmountRupees(Number(e.target.value))}
+              className="w-16 bg-transparent text-white font-mono font-medium focus:outline-none text-xs"
+            />
+          </div>
         </div>
       </div>
 
       {/* Sliders Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         
-        {/* Drop Rate */}
-        <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="font-semibold text-rose-400">Webhook Drop Rate</span>
-            <span className="font-mono font-bold text-rose-400">{dropRate}%</span>
+        <div className="bg-slate-900/60 p-3 rounded border border-slate-800/80">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-slate-300 font-medium">Webhook Drop Rate</span>
+            <span className="font-mono text-slate-200 font-semibold">{dropRate}%</span>
           </div>
           <input
             type="range"
@@ -183,16 +151,15 @@ export default function ChaosPanel({ onActionComplete }) {
             max="100"
             value={dropRate}
             onChange={(e) => handleSliderChange(Number(e.target.value), delayRate, corruptRate)}
-            className="w-full accent-rose-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+            className="w-full h-1 bg-slate-700 rounded cursor-pointer accent-[#0C66E4]"
           />
-          <p className="text-[10px] text-slate-500 mt-1">Simulates network blackhole & timeout</p>
+          <span className="text-[10px] text-slate-500 block mt-1">Silent network drops</span>
         </div>
 
-        {/* Delay Rate */}
-        <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="font-semibold text-amber-400">Delay Rate</span>
-            <span className="font-mono font-bold text-amber-400">{delayRate}%</span>
+        <div className="bg-slate-900/60 p-3 rounded border border-slate-800/80">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-slate-300 font-medium">Delay Rate</span>
+            <span className="font-mono text-slate-200 font-semibold">{delayRate}%</span>
           </div>
           <input
             type="range"
@@ -200,16 +167,15 @@ export default function ChaosPanel({ onActionComplete }) {
             max="100"
             value={delayRate}
             onChange={(e) => handleSliderChange(dropRate, Number(e.target.value), corruptRate)}
-            className="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+            className="w-full h-1 bg-slate-700 rounded cursor-pointer accent-[#0C66E4]"
           />
-          <p className="text-[10px] text-slate-500 mt-1">Simulates 30s-10m queue backlog</p>
+          <span className="text-[10px] text-slate-500 block mt-1">Queue latency spikes</span>
         </div>
 
-        {/* Corruption Rate */}
-        <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="font-semibold text-purple-400">Corruption Rate</span>
-            <span className="font-mono font-bold text-purple-400">{corruptRate}%</span>
+        <div className="bg-slate-900/60 p-3 rounded border border-slate-800/80">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-slate-300 font-medium">Corruption Rate</span>
+            <span className="font-mono text-slate-200 font-semibold">{corruptRate}%</span>
           </div>
           <input
             type="range"
@@ -217,82 +183,64 @@ export default function ChaosPanel({ onActionComplete }) {
             max="100"
             value={corruptRate}
             onChange={(e) => handleSliderChange(dropRate, delayRate, Number(e.target.value))}
-            className="w-full accent-purple-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+            className="w-full h-1 bg-slate-700 rounded cursor-pointer accent-[#0C66E4]"
           />
-          <p className="text-[10px] text-slate-500 mt-1">Mutates HMAC signature & payload</p>
+          <span className="text-[10px] text-slate-500 block mt-1">Signature tampering</span>
         </div>
 
-        {/* Delivered Rate */}
-        <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="font-semibold text-emerald-400">Normal Delivery</span>
-            <span className="font-mono font-bold text-emerald-400">{passRate}%</span>
+        <div className="bg-slate-900/60 p-3 rounded border border-slate-800/80">
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-slate-300 font-medium">Normal Delivery</span>
+            <span className="font-mono text-emerald-400 font-semibold">{passRate}%</span>
           </div>
-          <div className="w-full bg-slate-800 h-1.5 rounded-lg overflow-hidden mt-2">
+          <div className="w-full bg-slate-800 h-1 rounded overflow-hidden mt-2">
             <div className="bg-emerald-500 h-full" style={{ width: `${passRate}%` }} />
           </div>
-          <p className="text-[10px] text-slate-500 mt-1">Healthy normal webhook delivery</p>
+          <span className="text-[10px] text-slate-500 block mt-1">Healthy transit</span>
         </div>
 
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap items-center gap-3">
-        
-        {/* Star Button: Full Ghost Payment Demo */}
+      {/* Action Controls */}
+      <div className="flex flex-wrap items-center gap-2.5">
         <button
           onClick={handleFullGhostScenario}
           disabled={isRunning}
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-black shadow-lg shadow-amber-500/20 transition-all transform active:scale-95 disabled:opacity-50"
+          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-[#0C66E4] hover:bg-[#0052CC] text-white transition-colors disabled:opacity-50 shadow-sm"
         >
-          <Sparkles className="w-4 h-4 text-black" />
-          <span>Trigger Ghost Payment Scenario</span>
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>Simulate Ghost Payment Scenario</span>
         </button>
 
-        {/* Corrupted Signature Scenario */}
         <button
           onClick={handleCorruptedWebhookScenario}
           disabled={isRunning}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-800/60 transition-all disabled:opacity-50"
+          className="flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors disabled:opacity-50"
         >
-          <ShieldAlert className="w-4 h-4 text-purple-400" />
-          <span>Corrupt Signature (Test Escalation Gate)</span>
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+          <span>Simulate Corrupted Signature</span>
         </button>
 
-        {/* Create Order Only */}
-        <button
-          onClick={handleCreateOrderOnly}
-          disabled={isRunning}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all disabled:opacity-50"
-        >
-          <Play className="w-4 h-4 text-cyan-400" />
-          <span>Create Test Order (Pending)</span>
-        </button>
-
-        {/* Manual Reconcile Now */}
         <button
           onClick={handleManualReconcile}
           disabled={isRunning}
-          className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-800/60 transition-all disabled:opacity-50"
+          className="flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 text-cyan-400 ${isRunning ? 'animate-spin' : ''}`} />
-          <span>Run Reconciliation Poller Now</span>
+          <RefreshCw className={`w-3.5 h-3.5 text-slate-400 ${isRunning ? 'animate-spin' : ''}`} />
+          <span>Trigger Reconciliation Poller</span>
         </button>
-
       </div>
 
-      {/* Live Status Message Banner */}
+      {/* Clean Status Banner */}
       {statusMsg && (
-        <div className={`mt-4 p-3 rounded-lg text-xs font-medium border flex items-start space-x-2 ${
-          statusMsg.type === 'success' ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' :
-          statusMsg.type === 'warning' ? 'bg-amber-950/40 border-amber-500/40 text-amber-300' :
-          statusMsg.type === 'error' ? 'bg-rose-950/40 border-rose-500/40 text-rose-300' :
-          'bg-blue-950/40 border-blue-500/40 text-blue-300'
+        <div className={`mt-3.5 p-2.5 rounded text-xs font-medium border flex items-center space-x-2 ${
+          statusMsg.type === 'success' ? 'bg-emerald-950/40 border-emerald-800/50 text-emerald-300' :
+          statusMsg.type === 'warning' ? 'bg-amber-950/40 border-amber-800/50 text-amber-300' :
+          statusMsg.type === 'error' ? 'bg-rose-950/40 border-rose-800/50 text-rose-300' :
+          'bg-slate-900 border-slate-700 text-slate-300'
         }`}>
-          <div className="mt-0.5 shrink-0">
-            {statusMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
-          </div>
-          <span className="leading-relaxed">{statusMsg.text}</span>
+          {statusMsg.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />}
+          <span>{statusMsg.text}</span>
         </div>
       )}
 

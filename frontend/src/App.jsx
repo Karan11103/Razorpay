@@ -42,7 +42,6 @@ export default function App() {
 
   useEffect(() => {
     refreshData();
-    // 3.5s interval (complies with "poll every 3-5 seconds — not under 2s")
     const interval = setInterval(refreshData, 3500);
     return () => clearInterval(interval);
   }, [refreshData]);
@@ -54,29 +53,28 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col font-sans">
       
-      {/* Top Navigation */}
+      {/* Top Enterprise Navigation */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         escalationsCount={escalationsCount}
-        isLive={true}
       />
 
-      {/* Main Container */}
+      {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        {/* Dashboard Tab */}
+        {/* Dashboard Overview */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6 animate-fadeIn">
-            {/* Top Stat Cards */}
-            <StatCards stats={stats} onReconcileClick={refreshData} />
+            {/* Top Metric Cards */}
+            <StatCards stats={stats} />
 
-            {/* Embedded Simulation Controls Banner for live demos */}
+            {/* Developer Sandbox Controls */}
             <ChaosPanel onActionComplete={refreshData} />
 
-            {/* Live Event Stream Feed */}
+            {/* Reconciliation Stream */}
             <LiveFeed
               events={recentEvents}
               isLoading={isFeedLoading}
@@ -99,7 +97,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Simulation Controls Dedicated Tab */}
+        {/* Simulation Controls Dedicated View */}
         {activeTab === 'simulation' && (
           <div className="space-y-6 animate-fadeIn">
             <ChaosPanel onActionComplete={refreshData} />
@@ -120,16 +118,16 @@ export default function App() {
 
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900/80 bg-[#080d1a] py-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Ghost Payment Detector — Razorpay AI Buildathon</span>
-          <div className="flex items-center space-x-4">
-            <span className="text-slate-400">Deterministic Bounded Reconciler</span>
+      {/* Enterprise Footer */}
+      <footer className="border-t border-slate-800/80 bg-[#0B111E] py-4 text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>Razorpay AI Buildathon • Track 01 (Agentic Commerce) / Track 03 (Revenue Recovery)</span>
+          <div className="flex items-center space-x-3 text-[11px] font-mono text-slate-500">
+            <span>Deterministic Gate</span>
             <span>•</span>
-            <span className="text-cyan-400 font-mono">O(1) Idempotency</span>
+            <span>O(1) Idempotency</span>
             <span>•</span>
-            <span className="text-emerald-400 font-mono">Isolated LLM</span>
+            <span>Isolated Read-Only LLM</span>
           </div>
         </div>
       </footer>

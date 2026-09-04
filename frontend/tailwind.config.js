@@ -7,20 +7,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        brand: {
-          dark: '#0a0e1a',
-          card: '#111827',
-          border: '#1f293d',
-          accent: '#00BAF2', // Razorpay cyan
-          blue: '#0C2340',   // Razorpay deep blue
-          emerald: '#10B981',
-          amber: '#F59E0B',
-          rose: '#EF4444'
+        rzp: {
+          bg: '#090D16',         // Deep enterprise canvas
+          surface: '#0F1626',    // Card background
+          surfaceHover: '#141D30',
+          border: '#1E293B',     // Subtle 1px dividing border
+          borderLight: '#334155',
+          blue: '#0C66E4',       // Official Razorpay corporate blue
+          blueHover: '#0052CC',
+          blueLight: 'rgba(12, 102, 228, 0.08)',
+          navy: '#0C2340',
+          success: '#10B981',
+          warning: '#F59E0B',
+          danger: '#EF4444',
+          muted: '#64748B',
+          text: '#F8FAFC',
+          subtext: '#94A3B8',
         }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        mono: ['JetBrains Mono', 'SFMono-Regular', 'Menlo', 'monospace']
       }
     },
   },

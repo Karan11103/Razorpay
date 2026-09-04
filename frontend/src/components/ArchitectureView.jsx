@@ -1,237 +1,157 @@
 import React from 'react';
-import { ShieldCheck, Database, Cpu, Lock, FileCode, CheckCircle, XCircle, ArrowRight, Zap, Bot, Terminal } from 'lucide-react';
+import { Shield, Layers, Database, Lock, Bot, Terminal, CheckCircle2, ArrowRight } from 'lucide-react';
 
 export default function ArchitectureView() {
   const complexityData = [
     {
       component: 'Order Lookup for Poller',
       complexity: 'O(1) seek',
-      defense: 'Compound index on (status, created_at); B-Tree index scan instead of linear table scan'
+      defense: 'Compound B-Tree index on (status, created_at); B-Tree index seek eliminates linear table scan'
     },
     {
       component: 'Batch Reconciliation Poll',
       complexity: 'O(N) time, O(1) RAM',
-      defense: 'Stream-processed via paginated cursor limit/offset; never loads all orders into Python memory'
+      defense: 'Stream-processed via cursor pagination (limit/offset); never loads all database orders into memory'
     },
     {
       component: 'Reconciliation Gate Function',
       complexity: 'O(1) time',
-      defense: 'Strict 5-step deterministic checks with early returns; zero loops over historical transactions'
+      defense: 'Strict 5-step deterministic verification with early returns; zero iteration over transaction history'
     },
     {
       component: 'Idempotency Guard',
       complexity: 'O(1) avg',
-      defense: 'Unique primary key constraint on `corrections(order_id)`; eliminates O(N) audit log scans'
+      defense: 'Unique primary key constraint on `corrections(order_id)`; eliminates scanning audit trail tables'
     },
     {
       component: 'Audit Log Write',
       complexity: 'O(1) append',
-      defense: 'Append-only immutable record; never updated or deleted; permanent compliance trail'
+      defense: 'Append-only SQLite table with autoincrement ID; records are immutable and never updated or deleted'
     },
     {
       component: 'Dashboard Aggregations',
       complexity: 'O(log N)',
-      defense: 'Direct SQL engine aggregations (COUNT/SUM on indexed status); zero application-level filtering'
+      defense: 'Computed directly within SQLite engine using indexed COUNT and SUM queries; zero in-memory app filtering'
     },
     {
       component: 'LLM Explainer Module',
       complexity: 'O(1) post-decision',
-      defense: 'Asynchronous post-gate call; zero access to order state mutation or financial logic'
+      defense: 'Asynchronous post-gate call; completely isolated with zero database write access and zero money movement'
     }
   ];
 
   return (
     <div className="space-y-6">
       
-      {/* AI Boundary Defense Statement */}
-      <div className="bg-gradient-to-r from-blue-950/60 to-slate-900 border border-cyan-500/40 rounded-xl p-5 shadow-2xl">
-        <div className="flex items-center space-x-2.5 mb-2">
-          <ShieldCheck className="w-5 h-5 text-cyan-400" />
-          <h2 className="text-base font-bold text-white tracking-wide">
-            The AI Judgment Boundary: Why the LLM Never Moves Money
-          </h2>
+      {/* Executive Statement Callout */}
+      <div className="bg-[#0F1626] border border-slate-800 rounded-lg p-5">
+        <div className="flex items-center space-x-2 mb-2">
+          <Shield className="w-4 h-4 text-[#0C66E4]" />
+          <h3 className="text-sm font-semibold text-white tracking-tight">
+            AI Judgment Boundary: Why Deterministic Gates Guard Financial State
+          </h3>
         </div>
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-          <strong className="text-cyan-300">Core Engineering Invariant:</strong> In fintech infrastructure, non-deterministic language models must never make financial state transitions. In Ghost Payment Detector, 
-          <span className="text-emerald-400 font-semibold"> 100% of money-affecting decisions are executed by a deterministic, mathematical gate function </span> 
-          verifying gateway truth, cryptographic signatures, and amount parity. The LLM is strictly isolated downstream: it only reads the structured incident outcome to draft human-readable explanations and customer updates.
+        <p className="text-xs text-slate-300 leading-relaxed">
+          In core financial infrastructure, non-deterministic language models cannot be trusted to execute state transitions or move money. In Ghost Payment Detector, 
+          <strong className="text-white"> 100% of money-affecting decisions are bounded by a deterministic, mathematical gate function </strong> 
+          verifying gateway capture status, cryptographic signatures, and amount parity. The LLM is strictly isolated downstream: it only consumes structured outcome JSON to draft incident summaries for engineers and customer updates.
         </p>
       </div>
 
-      {/* Visual Pipeline Diagram */}
-      <div className="bg-[#0e1424] rounded-xl border border-slate-800 p-6 shadow-xl">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-cyan-400" />
-          Reconciliation Pipeline Architecture
-        </h3>
+      {/* Architecture Flow */}
+      <div className="bg-[#0F1626] rounded-lg border border-slate-800 p-5 shadow-sm">
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
+          <Layers className="w-3.5 h-3.5 text-[#0C66E4]" />
+          End-to-End System Pipeline
+        </h4>
 
-        {/* Diagram Flow */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           
-          {/* Column 1: Order Generation & Ingestion */}
-          <div className="space-y-4">
-            <div className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>01. Ingestion & Chaos</span>
+          {/* Step 1 */}
+          <div className="bg-slate-900/50 p-4 rounded border border-slate-800 space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="font-semibold text-white">1. Ingestion & Chaos</span>
+              <span className="font-mono text-[10px] text-slate-500">PHASE 01</span>
             </div>
-
-            {/* Checkout */}
-            <div className="bg-slate-900/90 border border-slate-700 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-1">
-                <span>Checkout Simulator</span>
-                <span className="font-mono text-[10px] text-cyan-400">REST API</span>
+            <div className="space-y-2 text-slate-400">
+              <div className="p-2 rounded bg-[#090D16] border border-slate-800/80">
+                <span className="font-medium text-slate-200 block mb-0.5">Checkout Simulator</span>
+                Creates order on Razorpay Test API & persists in merchant DB with status: <code className="text-amber-400 font-mono text-[11px]">pending</code>.
               </div>
-              <p className="text-[11px] text-slate-400">
-                Creates test order in Razorpay & persists in merchant DB with status: <code className="text-amber-400">pending</code>.
-              </p>
-            </div>
-
-            {/* Chaos Relay */}
-            <div className="bg-amber-950/20 border border-amber-500/40 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-amber-300 mb-1">
-                <span>Chaos Webhook Relay</span>
-                <span className="font-mono text-[10px] text-amber-400">Simulation</span>
-              </div>
-              <p className="text-[11px] text-slate-300">
+              <div className="p-2 rounded bg-[#090D16] border border-slate-800/80">
+                <span className="font-medium text-slate-200 block mb-0.5">Chaos Webhook Relay</span>
                 Randomly drops, delays, or corrupts incoming webhooks to reproduce the 2am webhook loss failure mode.
-              </p>
-            </div>
-
-            {/* Merchant DB */}
-            <div className="bg-slate-900/90 border border-slate-700 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-1">
-                <span className="flex items-center gap-1.5"><Database className="w-3.5 h-3.5 text-slate-400" /> Merchant DB</span>
-                <span className="font-mono text-[10px] text-emerald-400">SQLite (WAL)</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Order remains stuck in <code className="text-amber-400">pending</code> when webhook is silently dropped ("Ghost Payment").
-              </p>
-            </div>
-          </div>
-
-          {/* Column 2: Deterministic Reconciliation Gate */}
-          <div className="space-y-4">
-            <div className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>02. Deterministic Gate</span>
-            </div>
-
-            {/* Poller */}
-            <div className="bg-slate-900/90 border border-slate-700 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-1">
-                <span>Reconciliation Poller</span>
-                <span className="font-mono text-[10px] text-cyan-400">30s / Cron</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Queries <code className="text-cyan-300">WHERE status='pending'</code> via compound index & fetches Razorpay ground truth.
-              </p>
-            </div>
-
-            {/* Gate Box */}
-            <div className="bg-emerald-950/30 border-2 border-emerald-500/50 rounded-xl p-4 shadow-lg">
-              <div className="flex items-center justify-between text-xs font-bold text-emerald-300 mb-2">
-                <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Gate Function</span>
-                <span className="text-[10px] font-mono bg-emerald-900/60 px-1.5 py-0.5 rounded text-emerald-300">O(1) Strict</span>
-              </div>
-              <ul className="text-[11px] text-slate-300 space-y-1.5">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>1. Idempotency Guard (unique constraint)</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>2. Gateway status == 'captured'</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>3. Cryptographic signature & amount match</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
-                  <span>4. Terminal status check (no refund/dispute)</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Fork Outcomes */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-emerald-950/40 border border-emerald-500/40 p-2.5 rounded-lg text-center">
-                <span className="text-[10px] font-bold text-emerald-400 block uppercase">Allowed</span>
-                <span className="text-[10px] text-slate-300">Auto-correct to completed & log</span>
-              </div>
-              <div className="bg-amber-950/40 border border-amber-500/40 p-2.5 rounded-lg text-center">
-                <span className="text-[10px] font-bold text-amber-400 block uppercase">Blocked</span>
-                <span className="text-[10px] text-slate-300">Escalate to human review queue</span>
               </div>
             </div>
           </div>
 
-          {/* Column 3: Post-Decision Explainability & UI */}
-          <div className="space-y-4">
-            <div className="text-xs font-mono font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>03. Read-Only AI & Audit</span>
+          {/* Step 2 */}
+          <div className="bg-slate-900/50 p-4 rounded border border-slate-800 space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="font-semibold text-white">2. Deterministic Gate</span>
+              <span className="font-mono text-[10px] text-[#0C66E4]">PHASE 02</span>
             </div>
-
-            {/* Explainer Box */}
-            <div className="bg-purple-950/20 border border-purple-500/40 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-purple-300 mb-1">
-                <span className="flex items-center gap-1.5"><Bot className="w-3.5 h-3.5" /> AI Explainer</span>
-                <span className="font-mono text-[10px] text-purple-400">Post-Gate</span>
+            <div className="space-y-2 text-slate-400">
+              <div className="p-2 rounded bg-[#090D16] border border-slate-800/80">
+                <span className="font-medium text-slate-200 block mb-0.5">Reconciliation Poller (30s)</span>
+                Queries <code className="text-slate-300 font-mono text-[11px]">WHERE status='pending'</code> via compound index & fetches Razorpay ground truth.
               </div>
-              <p className="text-[11px] text-slate-300">
-                Receives structured event JSON post-decision. Produces incident engineering summary + courteous customer message draft.
-              </p>
-              <div className="mt-2 text-[10px] font-mono text-rose-300 bg-rose-950/40 px-2 py-0.5 rounded border border-rose-900/40">
-                GUARANTEE: Cannot mutate DB or move funds
+              <div className="p-2 rounded bg-[#090D16] border border-slate-800/80">
+                <span className="font-medium text-slate-200 block mb-1">5-Stage Verification</span>
+                <ul className="space-y-1 text-[11px] text-slate-300 font-mono">
+                  <li>• Idempotency guard check</li>
+                  <li>• Gateway status == 'captured'</li>
+                  <li>• Signature integrity verification</li>
+                  <li>• Exact amount parity match</li>
+                  <li>• Terminal status guard</li>
+                </ul>
               </div>
             </div>
+          </div>
 
-            {/* Audit Trail */}
-            <div className="bg-slate-900/90 border border-slate-700 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-1">
-                <span className="flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5 text-cyan-400" /> Immutable Audit Log</span>
-                <span className="font-mono text-[10px] text-cyan-400">Append-Only</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Every state transition recorded with actor, action, timestamp, and JSON diff for enterprise compliance.
-              </p>
+          {/* Step 3 */}
+          <div className="bg-slate-900/50 p-4 rounded border border-slate-800 space-y-2.5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <span className="font-semibold text-white">3. Resolution & Audit</span>
+              <span className="font-mono text-[10px] text-emerald-400">PHASE 03</span>
             </div>
-
-            {/* Dashboard */}
-            <div className="bg-slate-900/90 border border-slate-700 rounded-lg p-3.5 shadow-md">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-1">
-                <span>Reactive Dashboard</span>
-                <span className="font-mono text-[10px] text-cyan-400">React + Tailwind</span>
+            <div className="space-y-2 text-slate-400">
+              <div className="p-2 rounded bg-[#090D16] border border-slate-800/80">
+                <span className="font-medium text-slate-200 block mb-0.5">Auto-Correct / Escalate</span>
+                On approval: Order <code className="text-emerald-400 font-mono text-[11px]">corrected</code>. On block: Order <code className="text-amber-400 font-mono text-[11px]">escalated</code> to human queue.
               </div>
-              <p className="text-[11px] text-slate-400">
-                Real-time metrics, live incident feed, CSV exports, and simulation control sliders.
-              </p>
+              <div className="p-2 rounded bg-[#090D16] border border-slate-800/80">
+                <span className="font-medium text-slate-200 block mb-0.5">Read-Only AI Explainer</span>
+                Reads post-gate outcome JSON to generate incident summary and customer message. Zero DB write permissions.
+              </div>
             </div>
           </div>
 
         </div>
       </div>
 
-      {/* Complexity Defense Table */}
-      <div className="bg-[#0e1424] rounded-xl border border-slate-800 p-6 shadow-xl">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-cyan-400" />
-          Time & Space Complexity Proof (Fintech Scale)
-        </h3>
+      {/* Complexity Table */}
+      <div className="bg-[#0F1626] rounded-lg border border-slate-800 p-5 shadow-sm">
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <Terminal className="w-3.5 h-3.5 text-[#0C66E4]" />
+          Time & Space Complexity Proof
+        </h4>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900/80 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+            <thead className="bg-[#090D16] text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
               <tr>
-                <th className="py-2.5 px-3.5">Component</th>
-                <th className="py-2.5 px-3.5">Complexity</th>
-                <th className="py-2.5 px-3.5">Architectural Defense</th>
+                <th className="py-2.5 px-4 font-semibold">Component</th>
+                <th className="py-2.5 px-4 font-semibold">Complexity</th>
+                <th className="py-2.5 px-4 font-semibold">Architectural Defense</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800 font-mono text-slate-300">
+            <tbody className="divide-y divide-slate-800/80 text-slate-300 font-mono">
               {complexityData.map((item, idx) => (
                 <tr key={idx} className="hover:bg-slate-900/40">
-                  <td className="py-2.5 px-3.5 font-sans font-semibold text-slate-200">{item.component}</td>
-                  <td className="py-2.5 px-3.5 text-cyan-400 font-bold">{item.complexity}</td>
-                  <td className="py-2.5 px-3.5 font-sans text-xs text-slate-400">{item.defense}</td>
+                  <td className="py-2.5 px-4 font-sans font-medium text-slate-200">{item.component}</td>
+                  <td className="py-2.5 px-4 text-[#0C66E4] font-semibold">{item.complexity}</td>
+                  <td className="py-2.5 px-4 font-sans text-xs text-slate-400">{item.defense}</td>
                 </tr>
               ))}
             </tbody>

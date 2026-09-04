@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { CheckCircle2, AlertTriangle, XCircle, Bot, ArrowRight, MessageSquare, Copy, Check, RefreshCw } from 'lucide-react';
+import { ArrowRight, MessageSquare, Copy, Check, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function LiveFeed({ events, isLoading, onRefresh }) {
   const [copiedId, setCopiedId] = useState(null);
+  const [expandedRows, setExpandedRows] = useState({});
 
   const handleCopy = (id, text) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const toggleRow = (id) => {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const formatTimestamp = (isoStr) => {
@@ -20,132 +25,127 @@ export default function LiveFeed({ events, isLoading, onRefresh }) {
   };
 
   return (
-    <div className="bg-[#0e1424] rounded-xl border border-slate-800 shadow-xl overflow-hidden">
+    <div className="bg-[#0F1626] rounded-lg border border-slate-800 shadow-sm overflow-hidden">
+      
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
-        <div className="flex items-center space-x-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <div>
-            <h2 className="text-base font-semibold text-white flex items-center gap-2">
-              Live Reconciliation Stream
-              <span className="text-xs font-normal text-slate-400 font-mono">(auto-polled every 3s)</span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              Deterministic gate evaluations & isolated LLM-generated incident explanations
-            </p>
+      <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+        <div>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-sm font-semibold text-white tracking-tight">
+              Reconciliation Activity Feed
+            </h3>
+            <span className="text-[11px] font-mono text-slate-400">
+              (Live Stream • 3.5s auto-poll)
+            </span>
           </div>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Audit of evaluated orders, deterministic gate decisions, and incident summaries
+          </p>
         </div>
+
         <button
           onClick={onRefresh}
           disabled={isLoading}
-          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-cyan-400' : ''}`} />
-          <span className="hidden sm:inline">Refresh</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-[#0C66E4]' : 'text-slate-400'}`} />
+          <span>Refresh</span>
         </button>
       </div>
 
-      {/* Feed List */}
-      <div className="divide-y divide-slate-800/80 max-h-[600px] overflow-y-auto">
+      {/* Stream List */}
+      <div className="divide-y divide-slate-800/80 max-h-[580px] overflow-y-auto">
         {events.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 rounded-full bg-slate-800/70 mx-auto flex items-center justify-center text-slate-400 mb-3">
-              <RefreshCw className="w-6 h-6 animate-pulse" />
-            </div>
-            <p className="text-sm text-slate-300 font-medium">No reconciliation events yet</p>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              Use the Simulation Controls to trigger a test checkout and drop a webhook to observe the auto-reconciliation in real time.
-            </p>
+          <div className="p-12 text-center text-slate-400 text-xs">
+            No reconciliation events recorded yet. Trigger a test order in the Sandbox above.
           </div>
         ) : (
           events.map((ev) => {
             const isAllowed = ev.gate_decision === 'allowed';
-            const statusColor = isAllowed 
-              ? 'border-emerald-500/40 bg-emerald-950/20 text-emerald-400'
-              : 'border-amber-500/40 bg-amber-950/20 text-amber-400';
+            const isExpanded = expandedRows[ev.id] !== false; // default expanded
 
             return (
-              <div key={ev.id} className="p-4 sm:p-5 hover:bg-slate-900/30 transition-colors">
+              <div key={ev.id} className="p-4 hover:bg-slate-900/30 transition-colors">
                 
-                {/* Event Top Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${statusColor}`}>
-                      {isAllowed ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>AUTO-CORRECTED</span>
-                        </>
-                      ) : (
-                        <>
-                          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                          <span>BLOCKED & ESCALATED</span>
-                        </>
-                      )}
+                {/* Main Event Row */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center space-x-2.5">
+                    {/* Status Pill */}
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold font-mono border ${
+                      isAllowed 
+                        ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/50' 
+                        : 'bg-amber-950/50 text-amber-400 border-amber-800/50'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isAllowed ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                      {isAllowed ? 'AUTO-CORRECTED' : 'BLOCKED & ESCALATED'}
                     </span>
-                    <span className="font-mono text-xs font-bold text-slate-200">
+
+                    <span className="font-mono text-xs font-semibold text-slate-200">
                       {ev.order_id}
                     </span>
                   </div>
 
                   <div className="flex items-center space-x-3 text-xs">
-                    <span className="font-mono font-bold text-cyan-400">
+                    <span className="font-mono font-semibold text-white">
                       ₹{((ev.amount_in_rupees) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </span>
                     <span className="text-slate-500 font-mono text-[11px]">
                       {formatTimestamp(ev.created_at)}
                     </span>
+                    <button
+                      onClick={() => toggleRow(ev.id)}
+                      className="text-slate-400 hover:text-slate-200 p-0.5"
+                    >
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
                 </div>
 
-                {/* State Transition Pill */}
-                <div className="flex items-center space-x-2 text-xs mb-3 bg-slate-900/70 p-2 rounded-lg border border-slate-800/80 font-mono">
-                  <span className="text-slate-400">DB State:</span>
-                  <span className="text-amber-400 font-semibold uppercase">{ev.db_status_before}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
-                  <span className={`font-semibold uppercase ${isAllowed ? 'text-emerald-400' : 'text-slate-300'}`}>
-                    {ev.db_status_after}
-                  </span>
-                  <span className="text-slate-600">|</span>
-                  <span className="text-slate-400">Gateway Truth:</span>
-                  <span className="text-cyan-400 font-semibold uppercase">{ev.gateway_status}</span>
+                {/* State Transition & Gate Verification */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 bg-slate-900/50 px-3 py-1.5 rounded border border-slate-800 font-mono mb-2.5">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-slate-500">State:</span>
+                    <span className="text-amber-400">{ev.db_status_before}</span>
+                    <ArrowRight className="w-3 h-3 text-slate-600" />
+                    <span className={isAllowed ? 'text-emerald-400 font-semibold' : 'text-slate-300'}>
+                      {ev.db_status_after}
+                    </span>
+                  </div>
+                  <span className="text-slate-700 hidden sm:inline">|</span>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-slate-500">Gateway Truth:</span>
+                    <span className="text-slate-200 font-medium">{ev.gateway_status}</span>
+                  </div>
+                  <span className="text-slate-700 hidden sm:inline">|</span>
+                  <div className="truncate max-w-md">
+                    <span className="text-slate-500">Gate:</span> <span className="text-slate-300">{ev.gate_reason}</span>
+                  </div>
                 </div>
 
-                {/* Gate Reason */}
-                <div className="text-xs text-slate-300 mb-3 pl-2 border-l-2 border-slate-700">
-                  <span className="text-slate-500 font-mono text-[11px] block">DETERMINISTIC GATE REASON:</span>
-                  {ev.gate_reason}
-                </div>
-
-                {/* LLM Incident Summary & Customer Draft */}
-                {ev.llm_summary && (
-                  <div className="mt-3 bg-gradient-to-r from-blue-950/30 to-indigo-950/20 border border-blue-900/40 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center space-x-1.5 text-xs text-blue-400 font-medium">
-                        <Bot className="w-3.5 h-3.5" />
-                        <span>AI Incident Explainer (Non-Financial Scope)</span>
-                      </div>
-                      <span className="text-[10px] text-blue-300 font-mono bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-800/40">
-                        Isolated Post-Gate
+                {/* AI Explainer Accordion Body */}
+                {isExpanded && ev.llm_summary && (
+                  <div className="bg-[#0B111E] border border-slate-800 rounded p-3 text-xs space-y-2">
+                    <div>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-0.5">
+                        Incident Explanation (Advisory LLM)
                       </span>
+                      <p className="text-slate-300 leading-relaxed">
+                        {ev.llm_summary}
+                      </p>
                     </div>
-                    <p className="text-xs text-slate-200 leading-relaxed mb-2">
-                      {ev.llm_summary}
-                    </p>
 
-                    {/* Customer Message Draft */}
                     {ev.customer_message && (
-                      <div className="pt-2 border-t border-blue-900/40 mt-2 flex items-start justify-between gap-2">
-                        <div className="flex items-start space-x-2 text-xs text-slate-400">
-                          <MessageSquare className="w-3.5 h-3.5 text-cyan-400 mt-0.5 shrink-0" />
-                          <span className="italic text-slate-300">"{ev.customer_message}"</span>
+                      <div className="pt-2 border-t border-slate-800/80 flex items-start justify-between gap-2 text-slate-400">
+                        <div className="flex items-start space-x-2">
+                          <MessageSquare className="w-3.5 h-3.5 text-blue-400 mt-0.5 shrink-0" />
+                          <span className="text-slate-300 italic text-[11px]">"{ev.customer_message}"</span>
                         </div>
                         <button
                           onClick={() => handleCopy(ev.id, ev.customer_message)}
-                          className="shrink-0 p-1 rounded hover:bg-blue-900/40 text-slate-400 hover:text-white transition-colors"
-                          title="Copy customer message"
+                          className="shrink-0 text-slate-400 hover:text-white p-1"
+                          title="Copy message draft"
                         >
-                          {copiedId === ev.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          {copiedId === ev.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
                         </button>
                       </div>
                     )}
@@ -157,6 +157,7 @@ export default function LiveFeed({ events, isLoading, onRefresh }) {
           })
         )}
       </div>
+
     </div>
   );
 }

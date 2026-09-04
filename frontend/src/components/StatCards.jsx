@@ -1,95 +1,68 @@
 import React from 'react';
-import { IndianRupee, ShieldCheck, Clock, AlertCircle, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { IndianRupee, ShieldCheck, Clock, AlertCircle } from 'lucide-react';
 
-export default function StatCards({ stats, onReconcileClick, isReconciling }) {
+export default function StatCards({ stats }) {
   const cards = [
     {
-      title: 'Ghost Payments Caught',
+      label: 'Ghost Payments Caught',
       value: `₹${(stats.ghost_payments_caught_rupees || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      subtext: `${stats.ghost_payments_caught_count || 0} orders recovered safely`,
-      icon: IndianRupee,
-      glow: 'glow-emerald',
-      borderColor: 'border-emerald-500/30',
-      textColor: 'text-emerald-400',
-      badge: '100% Gated Auto-Recovered',
-      badgeColor: 'bg-emerald-950/70 text-emerald-400 border-emerald-800/60',
+      detail: `${stats.ghost_payments_caught_count || 0} orders auto-corrected`,
+      status: '100% Gated Match',
+      statusType: 'success'
     },
     {
-      title: 'Auto-Corrected vs Escalated',
+      label: 'Reconciliation Decisions',
       value: `${stats.auto_corrected_count || 0} / ${stats.escalated_count || 0}`,
-      subtext: `${stats.total_reconciled || 0} total evaluated events`,
-      icon: ShieldCheck,
-      glow: 'glow-cyan',
-      borderColor: 'border-cyan-500/30',
-      textColor: 'text-cyan-400',
-      badge: stats.total_reconciled > 0 
-        ? `${Math.round(((stats.auto_corrected_count || 0) / stats.total_reconciled) * 100)}% Pass Rate` 
-        : 'Zero Violations',
-      badgeColor: 'bg-cyan-950/70 text-cyan-400 border-cyan-800/60',
+      detail: `${stats.total_reconciled || 0} total evaluated events`,
+      status: 'Auto-Corrected vs Escalated',
+      statusType: 'neutral'
     },
     {
-      title: 'Avg Detection Latency',
+      label: 'Avg Detection Latency',
       value: `${stats.avg_detection_latency_seconds || 0}s`,
-      subtext: 'Time from webhook loss to recovery',
-      icon: Clock,
-      glow: 'glow-amber',
-      borderColor: 'border-amber-500/30',
-      textColor: 'text-amber-400',
-      badge: 'Real-time Bounded',
-      badgeColor: 'bg-amber-950/70 text-amber-400 border-amber-800/60',
+      detail: 'Webhook loss to DB recovery',
+      status: 'Target: < 30s',
+      statusType: 'neutral'
     },
     {
-      title: 'Active Pending Orders',
+      label: 'Active Pending Orders',
       value: `${stats.active_pending_count || 0}`,
-      subtext: 'Monitoring in database',
-      icon: AlertCircle,
-      glow: 'glow-rose',
-      borderColor: stats.active_pending_count > 0 ? 'border-amber-500/40' : 'border-slate-800',
-      textColor: stats.active_pending_count > 0 ? 'text-amber-400' : 'text-slate-400',
-      badge: stats.active_pending_count > 0 ? 'Awaiting Gateway Sync' : 'Reconciled Clean',
-      badgeColor: stats.active_pending_count > 0 
-        ? 'bg-amber-950/70 text-amber-300 border-amber-800/60' 
-        : 'bg-slate-800 text-slate-400 border-slate-700',
+      detail: 'In database awaiting gateway sync',
+      status: stats.active_pending_count > 0 ? 'Action Pending' : 'Healthy',
+      statusType: stats.active_pending_count > 0 ? 'warning' : 'success'
     }
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {cards.map((card, idx) => {
-        const Icon = card.icon;
-        return (
-          <div
-            key={idx}
-            className={`bg-[#0e1424] rounded-xl p-5 border ${card.borderColor} shadow-xl transition-all duration-300 hover:border-slate-600 relative overflow-hidden`}
-          >
-            {/* Ambient subtle glow background */}
-            <div className="absolute -right-6 -top-6 w-24 h-24 bg-cyan-500/5 rounded-full blur-xl pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-400">{card.title}</span>
-              <div className={`p-2 rounded-lg bg-slate-900/80 border border-slate-800/80 ${card.textColor}`}>
-                <Icon className="w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="mb-2">
-              <div className={`text-2xl font-bold font-mono tracking-tight ${card.textColor}`}>
-                {card.value}
-              </div>
-              <div className="text-xs text-slate-400 mt-1">
-                {card.subtext}
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${card.badgeColor}`}>
-                {card.badge}
-              </span>
-              <span className="text-[10px] font-mono text-slate-500">O(1) verified</span>
-            </div>
+      {cards.map((card, idx) => (
+        <div
+          key={idx}
+          className="bg-[#0F1626] rounded-lg p-4 border border-slate-800 hover:border-slate-700 transition-colors shadow-sm"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              {card.label}
+            </span>
+            <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${
+              card.statusType === 'success' ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/50' :
+              card.statusType === 'warning' ? 'bg-amber-950/60 text-amber-300 border-amber-800/50' :
+              'bg-slate-800/80 text-slate-300 border-slate-700'
+            }`}>
+              {card.status}
+            </span>
           </div>
-        );
-      })}
+
+          <div className="text-2xl font-bold font-mono text-white tracking-tight my-1">
+            {card.value}
+          </div>
+
+          <div className="text-xs text-slate-400 pt-1 border-t border-slate-800/60 flex items-center justify-between">
+            <span>{card.detail}</span>
+            <span className="font-mono text-[10px] text-slate-500">O(1)</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

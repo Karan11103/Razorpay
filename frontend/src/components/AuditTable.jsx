@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Search, ChevronLeft, ChevronRight, Filter, Shield, User, Bot, Clock } from 'lucide-react';
+import { Download, Search, ChevronLeft, ChevronRight, Filter, Clock } from 'lucide-react';
 import { fetchAuditLogs, getAuditExportUrl } from '../services/api';
 
 export default function AuditTable() {
@@ -50,27 +50,24 @@ export default function AuditTable() {
     switch (actor) {
       case 'system':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-950/80 text-cyan-400 border border-cyan-800/60">
-            <Shield className="w-3 h-3" />
-            <span>system</span>
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-blue-950/60 text-blue-400 border border-blue-800/40">
+            system
           </span>
         );
       case 'human':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-800/60">
-            <User className="w-3 h-3" />
-            <span>human</span>
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-amber-950/60 text-amber-400 border border-amber-800/40">
+            human
           </span>
         );
       case 'llm':
         return (
-          <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-950/80 text-blue-400 border border-blue-800/60">
-            <Bot className="w-3 h-3" />
-            <span>llm</span>
+          <span className="px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-slate-800 text-slate-300 border border-slate-700">
+            llm
           </span>
         );
       default:
-        return <span className="text-slate-400 text-xs">{actor}</span>;
+        return <span className="text-slate-400 text-xs font-mono">{actor}</span>;
     }
   };
 
@@ -91,46 +88,44 @@ export default function AuditTable() {
   };
 
   return (
-    <div className="bg-[#0e1424] rounded-xl border border-slate-800 shadow-xl overflow-hidden">
+    <div className="bg-[#0F1626] rounded-lg border border-slate-800 shadow-sm overflow-hidden">
       
       {/* Top Header & Export */}
-      <div className="p-4 sm:p-5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-900/40">
+      <div className="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-900/40">
         <div>
           <div className="flex items-center space-x-2">
-            <h2 className="text-base font-semibold text-white">Append-Only Audit Trail</h2>
-            <span className="text-xs text-slate-400 font-mono">({totalRecords} total events)</span>
+            <h3 className="text-sm font-semibold text-white tracking-tight">Compliance Audit Trail</h3>
+            <span className="text-xs text-slate-400 font-mono">({totalRecords} immutable entries)</span>
           </div>
-          <p className="text-xs text-slate-400">
-            Immutable, cryptographically ordered record of all reconciliation state transitions and actions
+          <p className="text-xs text-slate-400 mt-0.5">
+            Append-only financial record of reconciliation events, state transitions, and actor decisions
           </p>
         </div>
 
         <a
           href={getAuditExportUrl()}
           download="ghost_detector_audit_trail.csv"
-          className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shadow-sm"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shadow-sm"
         >
-          <Download className="w-3.5 h-3.5 text-cyan-400" />
+          <Download className="w-3.5 h-3.5 text-slate-400" />
           <span>Export CSV</span>
         </a>
       </div>
 
-      {/* Filters Bar */}
-      <form onSubmit={handleSearchSubmit} className="p-3 bg-slate-900/60 border-b border-slate-800 flex flex-wrap items-center gap-3">
+      {/* Filter Bar */}
+      <form onSubmit={handleSearchSubmit} className="p-3 bg-slate-900/50 border-b border-slate-800 flex flex-wrap items-center gap-2.5">
         
-        {/* Search Order ID */}
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
-            placeholder="Search by Order ID (e.g. order_)..."
+            placeholder="Search by Order ID..."
             value={orderIdSearch}
             onChange={(e) => setOrderIdSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+            className="w-full pl-8 pr-3 py-1.5 bg-[#090D16] border border-slate-700 rounded text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
           />
         </div>
 
-        {/* Actor Filter */}
         <div className="flex items-center space-x-2">
           <Filter className="w-3.5 h-3.5 text-slate-400" />
           <select
@@ -139,40 +134,40 @@ export default function AuditTable() {
               setActorFilter(e.target.value);
               setPage(1);
             }}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500"
+            className="bg-[#090D16] border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-blue-500 font-mono"
           >
             <option value="">All Actors</option>
-            <option value="system">system (gate/poller)</option>
-            <option value="human">human (ops)</option>
-            <option value="llm">llm (explainer)</option>
+            <option value="system">System (Gate/Poller)</option>
+            <option value="human">Human (Merchant Ops)</option>
+            <option value="llm">LLM (Advisory)</option>
           </select>
         </div>
 
         <button
           type="submit"
-          className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-black font-semibold text-xs transition-colors"
+          className="px-3.5 py-1.5 rounded bg-[#0C66E4] hover:bg-[#0052CC] text-white font-medium text-xs transition-colors"
         >
           Search
         </button>
       </form>
 
-      {/* Audit Log Table */}
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-900/80 text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
+          <thead className="bg-[#090D16] text-slate-400 uppercase font-mono text-[11px] border-b border-slate-800">
             <tr>
-              <th className="py-3 px-4">Timestamp (UTC)</th>
-              <th className="py-3 px-4">Actor</th>
-              <th className="py-3 px-4">Action</th>
-              <th className="py-3 px-4">Order ID</th>
-              <th className="py-3 px-4 text-right">Details</th>
+              <th className="py-2.5 px-4 font-semibold">Timestamp (UTC)</th>
+              <th className="py-2.5 px-4 font-semibold">Actor</th>
+              <th className="py-2.5 px-4 font-semibold">Action</th>
+              <th className="py-2.5 px-4 font-semibold">Order Reference</th>
+              <th className="py-2.5 px-4 font-semibold text-right">Details</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800 text-slate-300">
+          <tbody className="divide-y divide-slate-800/80 text-slate-300">
             {logs.length === 0 ? (
               <tr>
                 <td colSpan="5" className="py-8 text-center text-slate-500">
-                  {isLoading ? 'Loading audit records...' : 'No audit records match the selected filters.'}
+                  {isLoading ? 'Loading records...' : 'No audit entries found matching criteria.'}
                 </td>
               </tr>
             ) : (
@@ -195,25 +190,25 @@ export default function AuditTable() {
                         </div>
                       </td>
                       <td className="py-3 px-4">{getActorBadge(log.actor)}</td>
-                      <td className="py-3 px-4 font-mono font-semibold text-slate-200">
+                      <td className="py-3 px-4 font-mono font-medium text-slate-200">
                         {log.action}
                       </td>
-                      <td className="py-3 px-4 font-mono text-cyan-400 font-semibold">
+                      <td className="py-3 px-4 font-mono text-slate-300 font-semibold">
                         {log.order_id || '—'}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                          className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 underline"
+                          className="text-[11px] font-mono text-blue-400 hover:text-blue-300"
                         >
-                          {isExpanded ? 'Collapse' : 'Inspect JSON'}
+                          {isExpanded ? 'Collapse' : 'Inspect Payload'}
                         </button>
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr className="bg-slate-950/80">
+                      <tr className="bg-[#090D16]">
                         <td colSpan="5" className="p-4">
-                          <pre className="text-[11px] font-mono bg-slate-900 p-3 rounded-lg border border-slate-800 text-slate-300 overflow-x-auto max-h-48">
+                          <pre className="text-[11px] font-mono bg-slate-950 p-3 rounded border border-slate-800 text-slate-300 overflow-x-auto max-h-48">
                             {JSON.stringify(parsedDetail, null, 2)}
                           </pre>
                         </td>
@@ -228,12 +223,12 @@ export default function AuditTable() {
       </div>
 
       {/* Pagination Footer */}
-      <div className="p-3 border-t border-slate-800 bg-slate-900/40 flex items-center justify-between text-xs text-slate-400">
+      <div className="p-3 border-t border-slate-800 bg-slate-900/30 flex items-center justify-between text-xs text-slate-400">
         <div>
-          Showing page <span className="font-bold text-white">{page}</span> of{' '}
-          <span className="font-bold text-white">{totalPages}</span>
+          Page <span className="font-semibold text-white">{page}</span> of{' '}
+          <span className="font-semibold text-white">{totalPages}</span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1 || isLoading}
