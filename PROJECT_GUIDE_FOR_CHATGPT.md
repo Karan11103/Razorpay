@@ -34,44 +34,88 @@ The **Ghost Payment Detector** is an autonomous dual-channel reconciliation engi
 
 ---
 
-## 2. High-Level System Architecture
+## 2. System Architecture & Component Blueprint
 
+```mermaid
+flowchart TD
+    subgraph INGESTION["1. INGESTION & GATEWAY LAYER"]
+        User["Customer / Client Checkout"] -->|"1. POST /simulate/checkout"| Gateway["Razorpay Gateway API\n(Status: captured)"]
+        User -->|"Create Order (status: pending)"| MerchantDB[("Merchant Database\n(SQLite WAL)")]
+        Gateway -->|"2. Webhook: payment.captured"| ChaosRelay["Chaos Webhook Relay\n(Drop / Delay / Corrupt)"]
+    end
+
+    subgraph CHAOS["2. CHAOS INJECTION LAYER"]
+        ChaosRelay -.->|"Dropped at 2:00 AM (0% delivered)"| GhostState["GHOST PAYMENT STATE\nMerchant DB: pending\nGateway Truth: captured"]
+    end
+
+    subgraph RECONCILIATION["3. RECONCILIATION & VERIFICATION LAYER"]
+        Poller["Background Poller Engine\n(Cron 30s or POST /admin/reconcile-now)"]
+        Poller -->|"Fetch pending orders O(log N)"| MerchantDB
+        Poller -->|"Fetch ground truth"| Gateway
+
+        Poller -->|"Evaluate Candidate"| Gate{"Deterministic 5-Stage Gate\n(gate.py - Pure Math, Zero LLM)"}
+        Gate -->|"Rule 1"| R1["1. Idempotency Check O(1)"]
+        Gate -->|"Rule 2"| R2["2. Gateway Status == captured"]
+        Gate -->|"Rule 3"| R3["3. Signature & Integrity Check"]
+        Gate -->|"Rule 4"| R4["4. Exact Amount & Currency Match"]
+        Gate -->|"Rule 5"| R5["5. Terminal State Guard"]
+    end
+
+    subgraph EXECUTION["4. EXECUTION & MUTATION LAYER"]
+        R1 & R2 & R3 & R4 & R5 -->|"ALL 5 PASS"| AutoCorrect["Auto-Correct Execution\nUPDATE orders SET status='paid'\nINSERT INTO corrections"]
+        AutoCorrect -->|"O(1) Append"| AuditLog[("Append-Only Audit Log\naudit_log table")]
+        AutoCorrect --> MerchantDB
+
+        R1 & R2 & R3 & R4 & R5 -.->|"ANY RULE FAILS"| Escalate["Escalation Queue\nUPDATE orders SET status='escalated'"]
+        Escalate --> HumanOps["Human Operations Review\n(Approve / Refund / Reject)"]
+    end
+
+    subgraph AI["5. DOWNSTREAM LLM LAYER (STRICTLY ISOLATED)"]
+        AutoCorrect -->|"Structured Event Logs (Read-Only)"| LLM["Claude 3.5 Sonnet Explainer\n(Zero Database Write Access)"]
+        Escalate -->|"Discrepancy Payload (Read-Only)"| LLM
+        LLM --> RCA["Root-Cause Technical Analysis"]
+        LLM --> CustDraft["Empathetic Customer Email Draft"]
+    end
+
+    subgraph UI["6. OBSERVABILITY & DASHBOARD"]
+        MerchantDB & AuditLog & Escalate --> DashboardAPI["FastAPI REST Endpoints\n(/dashboard/stats, /events/recent, /audit-log)"]
+        DashboardAPI --> Frontend["React + Vite UI (razorpay.com/buildathon)\n(Live Stream, Chaos Sliders, CSV Export)"]
+    end
 ```
-[ Customer Checkout ]
-        │
-        ▼
-[ Razorpay Gateway API ] ──(status: captured)──┐
-        │                                      │
-        ▼                                      │
-[ Chaos Webhook Relay ]                        │
-  (Drop / Delay / Corrupt)                     │
-        │                                      │
-  (Dropped silently)                           │
-        │                                      ▼
-[ Merchant Database ] ◄────────────── [ Reconciliation Poller ]
-  (Order stuck in 'pending')            (Queries DB & Razorpay API)
-                                               │
-                                               ▼
-                                  [ 5-Stage Deterministic Gate ]
-                                  ├── 1. Idempotency Check
-                                  ├── 2. Gateway Status == 'captured'
-                                  ├── 3. Signature & Integrity Check
-                                  ├── 4. Amount & Currency Match
-                                  └── 5. Terminal State Guard
-                                               │
-                    ┌──────────────────────────┴──────────────────────────┐
-                    ▼                                                     ▼
-           [ Gate: PASSED ]                                      [ Gate: BLOCKED ]
-                    │                                                     │
-       [ Auto-Correct Order to 'paid' ]                     [ Move to Escalation Queue ]
-       [ Write to Append-Only Audit ]                       [ Flag for Human Review ]
-                    │                                                     │
-                    └──────────────────────────┬──────────────────────────┘
-                                               │
-                                               ▼
-                                 [ LLM Explainer (Claude) ]
-                                 (Read-Only: Incident Summary +
-                                  Customer Apology Draft)
+
+### End-to-End Sequence Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Customer
+    participant Checkout as Merchant Checkout
+    participant Gateway as Razorpay Gateway
+    participant Chaos as Chaos Proxy
+    participant DB as Merchant DB
+    participant Poller as Reconcile Poller
+    participant Gate as 5-Stage Gate
+    participant LLM as Claude Explainer
+
+    Customer->>Checkout: Clicks "Pay ₹1,499"
+    Checkout->>DB: INSERT order (status='pending')
+    Checkout->>Gateway: Capture payment (status='captured')
+    Gateway-->>Chaos: Dispatch webhook (payment.captured)
+    Note over Chaos: Chaos rule: DROP webhook (simulates 2 AM outage)
+    Chaos--xDB: [Packet Lost]
+    Note over DB: Order remains stuck in 'pending' (Ghost Payment)
+
+    Note over Poller: Background cycle triggers (every 30s)
+    Poller->>DB: SELECT * FROM orders WHERE status='pending'
+    Poller->>Gateway: GET /v1/payments/{payment_id}
+    Poller->>Gate: Evaluate (Order vs Gateway Truth)
+    Note over Gate: Passes all 5 Deterministic Rules
+    Gate->>DB: UPDATE orders SET status='paid'
+    Gate->>DB: INSERT INTO corrections (order_id)
+    Gate->>DB: INSERT INTO audit_log
+    Gate-->>LLM: Send outcome log (read-only)
+    LLM-->>Poller: Return incident RCA + customer email draft
+    Poller-->>Customer: Order Confirmed notification
 ```
 
 ---
