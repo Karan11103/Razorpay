@@ -65,6 +65,12 @@ def resolve_escalation(
     item.status = "resolved"
     item.resolved_at = datetime.utcnow()
 
+    # Update order status from 'escalated' to 'resolved'
+    order = db.scalar(select(Order).where(Order.id == item.order_id))
+    if order and order.status == "escalated":
+        order.status = "resolved"
+        order.updated_at = datetime.utcnow()
+
     # Append to AuditLog
     audit_entry = AuditLog(
         actor="human",

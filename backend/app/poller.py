@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
-from app.models import Order, Correction, ReconciliationEvent, AuditLog, EscalationQueueItem
+from app.models import Order, Correction, ReconciliationEvent, AuditLog, EscalationQueueItem, WebhookEvent
 from app.gate import reconciliation_gate
 from app.razorpay_client import gateway_client
 from app.explainer import explain_reconciliation_event
@@ -58,8 +58,14 @@ def reconcile_pending_orders(db: Session, cutoff_seconds: int = None, limit: int
         gateway_data = gateway_client.fetch_payment_status(order_id)
         gateway_status = gateway_data.get("status", "unknown")
         gateway_amount = gateway_data.get("amount", order.amount)
-        # Signature is verified as valid since it came directly from gateway API
-        gateway_sig_valid = True
+
+        # Check if any incoming webhook for this order was corrupted (e.g. signature failure)
+        corrupted_webhook = db.scalar(
+            select(WebhookEvent)
+            .where(WebhookEvent.order_id == order_id)
+            .where(WebhookEvent.status == "corrupted")
+        )
+        gateway_sig_valid = (corrupted_webhook is None)
 
         # Deterministic Gate Evaluation (O(1))
         decision = reconciliation_gate(
@@ -117,8 +123,10 @@ def reconcile_pending_orders(db: Session, cutoff_seconds: int = None, limit: int
             db.add(audit_entry)
 
         else:
-            # Blocked by gate — Escalate
-            db_status_after = order.status  # unchanged
+            # Blocked by gate — Escalate (transition out of 'pending' to prevent re-poll storm)
+            order.status = "escalated"
+            order.updated_at = datetime.utcnow()
+            db_status_after = "escalated"
             escalated_count += 1
 
             # 1. Create ReconciliationEvent
@@ -166,19 +174,24 @@ def reconcile_pending_orders(db: Session, cutoff_seconds: int = None, limit: int
                 db.add(esc_item)
 
         # 5. Isolated LLM Explainer invocation (post-decision)
-        event_dict = {
-            "order_id": order_id,
-            "gateway_status": gateway_status,
-            "db_status_before": db_status_before,
-            "gate_decision": "allowed" if decision.allowed else "blocked",
-            "gate_reason": decision.reason,
-            "db_status_after": db_status_after,
-            "amount": order.amount,
-            "currency": order.currency
-        }
-        explanation = explain_reconciliation_event(event_dict)
-        rec_event.llm_summary = explanation.get("summary")
-        rec_event.customer_message = explanation.get("customer_message")
+        try:
+            event_dict = {
+                "order_id": order_id,
+                "gateway_status": gateway_status,
+                "db_status_before": db_status_before,
+                "gate_decision": "allowed" if decision.allowed else "blocked",
+                "gate_reason": decision.reason,
+                "db_status_after": db_status_after,
+                "amount": order.amount,
+                "currency": order.currency
+            }
+            explanation = explain_reconciliation_event(event_dict)
+            rec_event.llm_summary = explanation.get("summary")
+            rec_event.customer_message = explanation.get("customer_message")
+        except Exception as e:
+            logger.error(f"Error generating explanation for {order_id}: {e}")
+            rec_event.llm_summary = f"Reconciliation {decision.reason}."
+            rec_event.customer_message = "Your order status is being verified."
 
         db.commit()
 

@@ -131,3 +131,46 @@ def test_escalation_flow(client):
     audit_res = client.get(f"/audit-log?action=MANUAL_ESCALATION_RESOLVED")
     assert audit_res.status_code == 200
     assert audit_res.json()["total_records"] >= 1
+
+def test_corrupted_webhook_escalation(client):
+    """
+    Simulates corrupted webhook signature injection:
+    1. Create checkout order
+    2. Inject corrupted webhook via Chaos relay
+    3. Run poller -> gate detects signature failure -> blocks auto-correction
+    4. Order transitions to 'escalated' and is queued for human review
+    5. Resolve escalation -> order transitions to 'resolved'
+    """
+    checkout_res = client.post("/simulate/checkout", json={"amount": 89900, "currency": "INR"})
+    assert checkout_res.status_code == 200
+    order_id = checkout_res.json()["id"]
+
+    # Inject corrupted webhook
+    webhook_res = client.post("/webhook/razorpay", json={
+        "order_id": order_id,
+        "force_chaos_action": "corrupt"
+    })
+    assert webhook_res.status_code == 200
+    assert webhook_res.json()["chaos_action"] == "corrupted"
+
+    # Run poller
+    rec_res = client.post("/admin/reconcile-now?cutoff_seconds=0")
+    assert rec_res.status_code == 200
+
+    # Verify order is in escalations
+    esc_res = client.get("/escalations")
+    assert esc_res.status_code == 200
+    esc_items = esc_res.json()
+    corrupt_item = next((it for it in esc_items if it["order_id"] == order_id), None)
+    assert corrupt_item is not None
+    assert "Signature verification failed" in corrupt_item["reason"]
+
+    # Resolve escalation
+    resolve_res = client.post(f"/escalations/{corrupt_item['id']}/resolve")
+    assert resolve_res.status_code == 200
+
+    # Verify order status is resolved
+    db = SessionLocal()
+    order = db.query(Order).filter(Order.id == order_id).first()
+    assert order.status == "resolved"
+    db.close()

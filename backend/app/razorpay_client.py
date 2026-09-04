@@ -11,13 +11,18 @@ class RazorpayGatewayClient:
     Gateway Client interfacing with Razorpay Test API.
     Supports real credentials with transparent mock fallback for zero-downtime offline demos.
     """
+    def _is_placeholder(self, val: str) -> bool:
+        if not val:
+            return True
+        v = val.strip().lower()
+        return any(x in v for x in ["your_key", "mock", "placeholder", "xxx", "12345678", "secret_here"])
+
     def __init__(self):
         self.key_id = settings.RAZORPAY_KEY_ID
         self.key_secret = settings.RAZORPAY_KEY_SECRET
         self.is_mock = (
-            not self.key_id
-            or not self.key_secret
-            or self.key_id.startswith("rzp_test_mock")
+            self._is_placeholder(self.key_id)
+            or self._is_placeholder(self.key_secret)
         )
         
         if not self.is_mock:

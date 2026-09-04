@@ -46,8 +46,11 @@ def get_audit_logs(
         except ValueError:
             pass
     if order_id:
-        query = query.join(ReconciliationEvent, AuditLog.reconciliation_event_id == ReconciliationEvent.id)\
-                     .where(ReconciliationEvent.order_id.ilike(f"%{order_id}%"))
+        query = query.outerjoin(ReconciliationEvent, AuditLog.reconciliation_event_id == ReconciliationEvent.id)\
+                     .where(
+                         (ReconciliationEvent.order_id.ilike(f"%{order_id}%")) |
+                         (AuditLog.detail_json.ilike(f"%{order_id}%"))
+                     )
 
     # Count total matching records
     total_records = db.scalar(select(func.count()).select_from(query.subquery())) or 0
@@ -61,10 +64,19 @@ def get_audit_logs(
     items = []
     for r in records:
         rec_event = r.reconciliation_event
+        extracted_order_id = rec_event.order_id if rec_event else None
+        if not extracted_order_id and r.detail_json:
+            try:
+                import json
+                d = json.loads(r.detail_json)
+                extracted_order_id = d.get("order_id")
+            except Exception:
+                pass
+
         items.append({
             "id": r.id,
             "reconciliation_event_id": r.reconciliation_event_id,
-            "order_id": rec_event.order_id if rec_event else None,
+            "order_id": extracted_order_id,
             "actor": r.actor,
             "action": r.action,
             "detail_json": r.detail_json,
@@ -92,6 +104,14 @@ def export_audit_logs_csv(db: Session = Depends(get_db)):
 
     for r in records:
         order_id = r.reconciliation_event.order_id if r.reconciliation_event else ""
+        if not order_id and r.detail_json:
+            try:
+                import json
+                d = json.loads(r.detail_json)
+                order_id = d.get("order_id", "")
+            except Exception:
+                pass
+
         writer.writerow([
             r.id,
             r.timestamp.isoformat(),

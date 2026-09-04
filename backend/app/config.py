@@ -1,7 +1,17 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+# Search and load .env from current dir, parent dir, or project root
+current_path = Path(__file__).resolve()
+for loc in [
+    Path.cwd() / ".env",
+    current_path.parent.parent / ".env",
+    current_path.parent.parent.parent / ".env",
+]:
+    if loc.is_file():
+        load_dotenv(dotenv_path=loc)
+        break
 
 class Settings:
     PROJECT_NAME: str = "Ghost Payment Detector"

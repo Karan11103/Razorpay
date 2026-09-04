@@ -58,9 +58,10 @@ def explain_reconciliation_event(event_data: Dict[str, Any]) -> Dict[str, str]:
     - Never participates in gating or money movement.
     - Retries once on invalid JSON, then safely falls back to template.
     """
-    api_key = settings.ANTHROPIC_API_KEY
-    if not api_key or api_key.strip() == "":
-        # Graceful, immediate fallback when Anthropic API key is not configured
+    api_key = (settings.ANTHROPIC_API_KEY or "").strip()
+    placeholder_tokens = ["your_", "placeholder", "your_anthropic", "xxx", "key_here"]
+    if not api_key or any(p in api_key.lower() for p in placeholder_tokens):
+        # Graceful, immediate fallback when Anthropic API key is not configured or is a placeholder
         return generate_fallback_explanation(event_data)
 
     import anthropic
