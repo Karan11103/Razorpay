@@ -152,7 +152,7 @@ draw.text((c3_x + 258, gy + 32), "BLOCKED (FLAGGED)", fill="#FEF2F2", font=font_
 
 # ----------------- COLUMN 4: AI MESSAGE GENERATION -----------------
 draw_card([c4_x, box_top, c4_x + col_w, box_top + 165], 
-          "Bounded Claude AI", 
+          "Bounded Groq AI", 
           ["• Generates technical RCA summary", "• Drafts customer apology email", "• Strictly read-only context", "• ZERO database write access", "• CANNOT make financial decisions"], 
           badge="STRICT BOUNDS", badge_color="#8B5CF6", bg="#141126", border="#4C1D95")
 
@@ -175,7 +175,7 @@ draw_card([c5_x, box_top, c5_x + col_w, box_top + 195],
 
 draw_card([c5_x, box_top + 215, c5_x + col_w, box_top + 430], 
           "Escalation & Exceptions", 
-          ["• Status transitioned to 'escalated'", "• Prevents poller loop storm", "• Flagged for Operations review", "• Actions: Manual Pay, Refund, Reject", "• Human action logged to audit trail", "• Claude AI is SKIPPED ENTIRELY"], 
+          ["• Status transitioned to 'escalated'", "• Prevents poller loop storm", "• Flagged for Operations review", "• Actions: Manual Pay, Refund, Reject", "• Human action logged to audit trail", "• AI Explainer is SKIPPED ENTIRELY"], 
           badge="HUMAN-IN-LOOP", badge_color="#B91C1C", bg="#1C1012", border="#7F1D1D")
 
 

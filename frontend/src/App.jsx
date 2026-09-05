@@ -162,9 +162,7 @@ export default function App() {
       <footer className="border-t border-[#182030] bg-[#07090E] py-6 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
-            <span className="font-extrabold text-slate-300 italic">Razorpay</span>
-            <span className="text-slate-600">/</span>
-            <span>Ghost Payment Detector</span>
+            <span className="font-semibold text-slate-300">Ghost Payment Detector</span>
             <span className="text-slate-700">|</span>
             <span className="text-slate-400">AI Buildathon Bangalore</span>
           </div>

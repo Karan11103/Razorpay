@@ -29,7 +29,7 @@ The **Ghost Payment Detector** is an autonomous dual-channel reconciliation engi
 1. Continuously cross-references stale merchant orders (`pending`) against Razorpay Gateway ground truth.
 2. Passes candidate payments through a pure **5-Stage Deterministic Gate Function** (zero AI hallucinations; pure mathematical verification).
 3. Safely auto-reconciles merchant orders in sub-30 seconds with **$O(1)$ idempotent guarantees** (no double-fulfillment or replay vulnerabilities).
-4. Strictly confines generative AI (Anthropic Claude 3.5 Sonnet) to downstream root-cause incident summaries and customer communication drafts. **The AI is physically forbidden from updating databases or making financial decisions.**
+4. Strictly confines generative AI (xAI Grok / Grok 2) to downstream root-cause incident summaries and customer communication drafts. **The AI is physically forbidden from updating databases or making financial decisions.**
 5. Includes a **Chaos Simulation Lab** allowing judges and engineers to test network failures (drop webhook, delay webhook, corrupt signature) in real time.
 
 ---
@@ -146,7 +146,7 @@ To guarantee 100% financial correctness, all state transitions are governed by `
 The frontend is styled in the dark, atmospheric **Razorpay Buildathon aesthetic** (`razorpay.com/buildathon/`): deep night palette (`#07090E`), cream typography (`#FBF7EE`), minimal borders, and zero clutter.
 
 ### 1. Navigation Bar (`Navbar.jsx`)
-* **Brand:** Displays `Razorpay /ghost-detector`.
+* **Brand:** Displays `ghost-detector`.
 * **Poller Pulse:** An active emerald indicator showing `POLLER ACTIVE (30s)`.
 * **Tabs:** Switch seamlessly between:
   * **Overview:** High-level dashboard with KPIs and live stream.
@@ -214,7 +214,7 @@ Presents formal mathematical Big-O bounds:
 ## 5. Technology Stack
 
 * **Backend:** Python 3.9+, FastAPI, SQLite (Write-Ahead Logging mode enabled for concurrent reads/writes), SQLAlchemy, Pydantic v2, Pytest.
-* **AI Model:** Anthropic Claude 3.5 Sonnet (with automatic offline fallback template engine if API keys are absent).
+* **AI Model:** xAI Grok (Grok 2 / grok-2-latest) via OpenAI-compatible endpoint (with automatic offline fallback template engine if API keys are absent).
 * **Payment Gateway SDK:** Razorpay Python SDK with high-fidelity offline mock simulator for local demos.
 * **Frontend:** React 18, Vite 5, TailwindCSS 3, Lucide Icons.
 

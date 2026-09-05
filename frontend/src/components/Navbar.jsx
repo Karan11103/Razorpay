@@ -19,15 +19,11 @@ export default function Navbar({ activeTab, setActiveTab, escalationsCount, onQu
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* Brand Logo & Slash Sub-product (Identical to razorpay.com/buildathon) */}
+          {/* Brand Logo */}
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1.5 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
-              {/* Razorpay Brand Text Icon */}
-              <span className="font-extrabold text-lg tracking-tighter text-white italic">
-                Razorpay
-              </span>
-              <span className="text-slate-400 font-normal text-sm tracking-tight">
-                /ghost-detector
+              <span className="font-extrabold text-lg tracking-tight text-white">
+                ghost-detector
               </span>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from app.config import settings
 
 logger = logging.getLogger("explainer")
@@ -47,68 +47,137 @@ def generate_fallback_explanation(event: Dict[str, Any]) -> Dict[str, str]:
 
     return {"summary": summary, "customer_message": customer_msg}
 
-def explain_reconciliation_event(event_data: Dict[str, Any]) -> Dict[str, str]:
-    """
-    LLM Explainer module.
-    Takes a structured ReconciliationEvent JSON and produces:
-    { "summary": str, "customer_message": str }
-    
-    GUARANTEES:
-    - Never modifies database state or Order status.
-    - Never participates in gating or money movement.
-    - Retries once on invalid JSON, then safely falls back to template.
-    """
-    api_key = (settings.ANTHROPIC_API_KEY or "").strip()
-    placeholder_tokens = ["your_", "placeholder", "your_anthropic", "xxx", "key_here"]
-    if not api_key or any(p in api_key.lower() for p in placeholder_tokens):
-        # Graceful, immediate fallback when Anthropic API key is not configured or is a placeholder
-        return generate_fallback_explanation(event_data)
+def _clean_json_text(text: str) -> str:
+    """Helper to strip markdown code blocks from LLM output."""
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    return text
 
-    import anthropic
-    client = anthropic.Anthropic(api_key=api_key)
+
+def _call_groq_api(api_key: str, event_data: Dict[str, Any]) -> Optional[Dict[str, str]]:
+    """Calls Groq LPU (OpenAI-compatible) using httpx."""
+    import httpx
 
     user_content = (
         f"Generate incident explanation for the following reconciliation event:\n"
         f"{json.dumps(event_data, indent=2)}"
     )
 
-    # Attempt 1
-    try:
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=400,
-            system=EXPLAINER_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_content}]
-        )
-        text = response.content[0].text.strip()
-        parsed = json.loads(text)
-        if "summary" in parsed and "customer_message" in parsed:
-            return parsed
-    except Exception as e:
-        logger.warning(f"LLM Attempt 1 failed or returned invalid JSON: {e}")
+    url = f"{settings.GROQ_API_BASE.rstrip('/')}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
-    # Retry once with stricter instruction
+    # Attempt 1: with json_object response_format
+    try:
+        payload = {
+            "model": settings.GROQ_MODEL or "groq/compound-mini",
+            "messages": [
+                {"role": "system", "content": EXPLAINER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_content}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 400,
+            "response_format": {"type": "json_object"}
+        }
+        with httpx.Client(timeout=12.0) as client:
+            resp = client.post(url, json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+            raw_text = data["choices"][0]["message"]["content"]
+            clean_text = _clean_json_text(raw_text)
+            parsed = json.loads(clean_text)
+            if "summary" in parsed and "customer_message" in parsed:
+                return {
+                    "summary": str(parsed["summary"]),
+                    "customer_message": str(parsed["customer_message"])
+                }
+    except Exception as e:
+        logger.warning(f"Groq API Attempt 1 failed: {e}")
+
+    # Retry once without response_format constraint
     try:
         retry_prompt = (
-            "CRITICAL: Output ONLY raw JSON with keys 'summary' and 'customer_message'. "
-            "No markdown, no commentary:\n" + user_content
+            "CRITICAL: Output ONLY raw JSON matching schema:\n"
+            '{"summary": "...", "customer_message": "..."}\n'
+            "No markdown ticks, no commentary.\n" + user_content
         )
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=400,
-            system=EXPLAINER_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": retry_prompt}]
-        )
-        text = response.content[0].text.strip()
-        # Strip potential code fences if returned
-        if text.startswith("```"):
-            lines = text.splitlines()
-            text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
-        parsed = json.loads(text)
-        if "summary" in parsed and "customer_message" in parsed:
-            return parsed
+        payload = {
+            "model": settings.GROQ_MODEL or "groq/compound-mini",
+            "messages": [
+                {"role": "system", "content": EXPLAINER_SYSTEM_PROMPT},
+                {"role": "user", "content": retry_prompt}
+            ],
+            "temperature": 0.1,
+            "max_tokens": 400
+        }
+        with httpx.Client(timeout=12.0) as client:
+            resp = client.post(url, json=payload, headers=headers)
+            resp.raise_for_status()
+            data = resp.json()
+            raw_text = data["choices"][0]["message"]["content"]
+            clean_text = _clean_json_text(raw_text)
+            parsed = json.loads(clean_text)
+            if "summary" in parsed and "customer_message" in parsed:
+                return {
+                    "summary": str(parsed["summary"]),
+                    "customer_message": str(parsed["customer_message"])
+                }
     except Exception as e:
-        logger.warning(f"LLM Attempt 2 failed: {e}. Reverting to fallback template.")
+        logger.warning(f"Groq API Retry failed: {e}")
 
-    # Ultimate safe fallback
+    return None
+
+
+def explain_reconciliation_event(event_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    AI Explainer module (powered by Groq / LPU).
+    Takes a structured ReconciliationEvent JSON and produces:
+    { "summary": str, "customer_message": str }
+    
+    GUARANTEES:
+    - Never modifies database state or Order status.
+    - Never participates in gating or money movement.
+    - Retries on invalid response, then safely falls back to template.
+    """
+    placeholder_tokens = ["your_", "placeholder", "your_groq", "your_grok", "your_anthropic", "xxx", "key_here"]
+
+    # 1. Primary AI Provider: Groq API
+    groq_key = (settings.GROQ_API_KEY or "").strip()
+    if groq_key and not any(p in groq_key.lower() for p in placeholder_tokens):
+        result = _call_groq_api(groq_key, event_data)
+        if result:
+            return result
+
+    # 2. Optional Fallback Provider: Anthropic Claude (if configured)
+    anthropic_key = (settings.ANTHROPIC_API_KEY or "").strip()
+    if anthropic_key and not any(p in anthropic_key.lower() for p in placeholder_tokens):
+        try:
+            import anthropic
+            client = anthropic.Anthropic(api_key=anthropic_key)
+            user_content = (
+                f"Generate incident explanation for the following reconciliation event:\n"
+                f"{json.dumps(event_data, indent=2)}"
+            )
+            response = client.messages.create(
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=400,
+                system=EXPLAINER_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_content}]
+            )
+            text = _clean_json_text(response.content[0].text)
+            parsed = json.loads(text)
+            if "summary" in parsed and "customer_message" in parsed:
+                return parsed
+        except Exception as e:
+            logger.warning(f"Fallback Anthropic call failed: {e}")
+
+    # 3. Ultimate Safe Fallback: Deterministic Template Engine
     return generate_fallback_explanation(event_data)

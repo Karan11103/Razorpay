@@ -169,7 +169,8 @@ Configurable variables in `.env`:
 ```ini
 RAZORPAY_KEY_ID=rzp_test_your_key_here
 RAZORPAY_KEY_SECRET=your_secret_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+GROK_API_KEY=your_grok_api_key_here
+GROK_MODEL=grok-2-latest
 DATABASE_URL=sqlite:///./ghost_payments.db
 DEFAULT_DROP_RATE=0.40
 DEFAULT_DELAY_RATE=0.20
